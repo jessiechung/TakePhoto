@@ -1,11 +1,17 @@
 package com.example.takephoto;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -13,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.provider.MediaStore;
 
 @SuppressLint("ValidFragment")
@@ -20,6 +27,7 @@ public class MainActivity extends ActionBarActivity {
 
 	private static final int REQUEST_CODE_PHOTO = 566;
 	private ImageView imageView;
+	private TextView textView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -73,12 +81,34 @@ public class MainActivity extends ActionBarActivity {
 				Bitmap bitmap = intent.getParcelableExtra("data");
 				imageView.setImageBitmap(bitmap);
 				Log.d("debug", "OK");
+				saveImage(bitmap);
 			} else if (resultCode == RESULT_CANCELED) {
 				Log.d("debug", "CANCELED");
 			} else {
 				Log.d("debug", "ELSE");
 			}
 		}
+	}
+	
+	private void saveImage(Bitmap bitmap) {
+		File imageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+		if (!imageDir.exists())
+			imageDir.mkdirs();
+		
+		File imageFile = new File(imageDir, "photo.png");
+		try {
+			FileOutputStream fos = new FileOutputStream(imageFile);
+			bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+			fos.flush();
+			fos.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		textView.setText(imageFile.getPath());
 	}
 
 	/**
@@ -95,6 +125,7 @@ public class MainActivity extends ActionBarActivity {
 			View rootView = inflater.inflate(R.layout.fragment_main, container,
 					false);
 			imageView = (ImageView) rootView.findViewById(R.id.imageView1);
+			textView = (TextView) rootView.findViewById(R.id.textView1);
 			return rootView;
 		}
 	}
