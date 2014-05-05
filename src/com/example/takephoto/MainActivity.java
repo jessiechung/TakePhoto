@@ -1,9 +1,15 @@
 package com.example.takephoto;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+
+import com.parse.Parse;
+import com.parse.ParseException;
+import com.parse.ParseFile;
+import com.parse.SaveCallback;
 
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
@@ -40,6 +46,8 @@ public class MainActivity extends ActionBarActivity {
 			getSupportFragmentManager().beginTransaction()
 					.add(R.id.container, new PlaceholderFragment()).commit();
 		}
+		
+		Parse.initialize(this, "lUQbf1G96D88I6KY4h5mFT9vN5v4PZjLBBJrPzp1", "cZKXe4pLBZ9wNHk8k4WreS7n2Mj1ZVjeOSj3hCId");
 	}
 
 	@Override
@@ -89,7 +97,9 @@ public class MainActivity extends ActionBarActivity {
 				imageView.setImageBitmap(bitmap);
 				saveImage(bitmap);*/
 				
+				imageView.setImageURI(outputFileUri);
 				textView.setText(outputFileUri.getPath());
+				saveToParse();
 				Log.d("debug", "OK");
 			} else if (resultCode == RESULT_CANCELED) {
 				Log.d("debug", "CANCELED");
@@ -105,6 +115,37 @@ public class MainActivity extends ActionBarActivity {
 			imageDir.mkdirs();
 		
 		return new File(imageDir, "photo.png");
+	}
+	
+	private void saveToParse() {
+		File file = getTargetFile();
+		byte[] data = new byte[(int) file.length()];
+		
+		try {
+			FileInputStream fis = new FileInputStream(file);
+			fis.read(data);
+			
+			int byteOffset = 0;
+			int byteCount = 0;
+			while ((byteCount = fis.read(data, byteOffset, data.length-byteOffset)) != -1)
+				byteOffset += byteCount;
+			
+			fis.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		final ParseFile parseFile = new ParseFile("photo.png", data);
+		parseFile.saveInBackground(new SaveCallback() {
+			@Override
+			public void done(ParseException e) {
+				Log.d("debug", parseFile.getUrl());
+			}
+		});
 	}
 	
 	private void saveImage(Bitmap bitmap) {		
